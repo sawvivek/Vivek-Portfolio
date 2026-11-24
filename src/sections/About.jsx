@@ -50,22 +50,21 @@ export default function About() {
             </h2>
 
             <p className="mt-2 text-lg sm:text-xl text-white/90 font-semibold">
-              Full Stack Developer
+              Web Developer | React Enthusiast
             </p>
 
             <p className="mt-4 text-gray-300 leading-relaxed text-base sm:text-lg max-w-2xl">
-              I build scalable, modern applications with a strong focus on clean
-              architecture, delightful UX, and performance. My toolkit spans
-              Java, React, Next.js, TypeScript, Tailwind CSS, and
-              FastAPI—bringing ideas to life from concept to production with
-              robust APIs and smooth interfaces.
+              I build responsive, user-friendly web applications with a strong
+              focus on clean code, modern design, and seamless user experiences.
+              My technical toolkit includes C, C++, Python, HTML, CSS,
+              JavaScript, React, Node.js, Express, and MySQL.
             </p>
 
             {/* Quick Stats */}
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               {[
-                { label: "Experience", value: "5+ years" },
-                { label: "Specialty", value: "Full Stack" },
+                { label: "Experience", value: "Fresher" },
+                { label: "Specialty", value: "Web Development" },
                 { label: "Focus", value: "Performance & UX" },
               ].map((item, i) => (
                 <motion.div
@@ -117,9 +116,11 @@ export default function About() {
           </h3>
 
           <p className="text-gray-300 leading-relaxed text-base sm:text-lg">
-            I'm a Software Developer, Content Creator, and Web Developer —
-            passionate about building fast, resilient applications and sharing
-            coding insights on Instagram and YouTube.
+            I'm passionate about building my skills in computer science and
+            software development. My interests include problem-solving and
+            modern web development using HTML, CSS, JavaScript, and React. I
+            enjoy exploring new technologies, working on creative projects, and
+            continuously learning to turn ideas into practical solutions.
           </p>
 
           <p className="mt-4 text-gray-400 text-base sm:text-lg">

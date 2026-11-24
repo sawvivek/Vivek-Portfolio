@@ -1,282 +1,304 @@
-// Importing React's useState hook for managing component state
 import { useState } from "react";
-
-// Importing motion component from Framer Motion for animations
 import { motion } from "framer-motion";
-
-// Importing EmailJS SDK
 import emailjs from "@emailjs/browser";
-
-// Importing Particles Background (same as Home component)
 import ParticlesBackground from "../components/ParticlesBackground.jsx";
-
-// Importing the contact image asset
 import Astra from "../assets/Astra.png";
 
-// Reading EmailJS credentials from environment variables (Vite)
+// Vite automatically loads variables from .env
 const SERVICE_ID = import.meta.env.VITE_SERVICE_ID;
 const TEMPLATE_ID = import.meta.env.VITE_TEMPLATE_ID;
 const PUBLIC_KEY = import.meta.env.VITE_PUBLIC_KEY;
 
-export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    service: "",
-    budget: "",
-    idea: "",
-  });
+const initialFormData = {
+  name: "",
+  email: "",
+  idea: "",
+};
 
+export default function Contact() {
+  const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("");
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === "budget" && value && !/^\d+$/.test(value)) return;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
-    setFormData((p) => ({ ...p, [name]: value }));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
 
-    if (errors[name]) setErrors((p) => ({ ...p, [name]: "" }));
+    if (status) setStatus("");
   };
 
+  // Form validation
   const validateForm = () => {
-    const required = ["name", "email", "service", "idea"];
     const newErrors = {};
 
-    required.forEach(
-      (f) => !formData[f].trim() && (newErrors[f] = "Fill this field"),
-    );
+    if (!formData.name.trim()) {
+      newErrors.name = "Please enter your name.";
+    }
 
-    if (formData.service !== "other" && !formData.budget.trim())
-      newErrors.budget = "Fill this field";
+    if (!formData.email.trim()) {
+      newErrors.email = "Please enter your email.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+
+    if (!formData.idea.trim()) {
+      newErrors.idea = "Please enter your message.";
+    }
 
     setErrors(newErrors);
-    return !Object.keys(newErrors).length;
+    return Object.keys(newErrors).length === 0;
   };
+
+  // Send email using EmailJS
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
+    if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
+      console.error("Missing EmailJS configuration:", {
+        serviceId: Boolean(SERVICE_ID),
+        templateId: Boolean(TEMPLATE_ID),
+        publicKey: Boolean(PUBLIC_KEY),
+      });
+
+      setStatus("error");
+      return;
+    }
+
     setStatus("sending");
 
     try {
-      await emailjs.send(
+      const templateParams = {
+        from_name: formData.name.trim(),
+        from_email: formData.email.trim(),
+        reply_to: formData.email.trim(),
+        message: formData.idea.trim(),
+      };
+
+      const response = await emailjs.send(
         SERVICE_ID,
         TEMPLATE_ID,
-        {
-          ...formData,
-          from_name: formData.name,
-          reply_to: formData.email,
-        },
+        templateParams,
         PUBLIC_KEY,
       );
 
+      console.log("Email sent successfully:", response);
+
       setStatus("success");
-      setFormData({ name: "", email: "", service: "", budget: "", idea: "" });
-    } catch (err) {
-      console.error("EmailJS Error:", err);
+      setFormData(initialFormData);
+      setErrors({});
+    } catch (error) {
+      console.error("EmailJS error:", error);
+      console.error("Status:", error?.status);
+      console.error("Details:", error?.text || error?.message);
+
       setStatus("error");
     }
   };
 
+  // Reusable input styling
+  const inputClass = (field) =>
+    `w-full p-3.5 rounded-xl bg-white/5 border ${
+      errors[field] ? "border-red-500" : "border-white/15"
+    } text-white placeholder-gray-500 outline-none focus:border-blue-500 focus:bg-white/[0.08] transition duration-300`;
+
   return (
     <section
       id="contact"
-      className="w-full min-h-screen relative bg-black overflow-hidden text-white py-20 px-6 md:px-20 flex flex-col md:flex-row items-center gap-10"
+      className="relative w-full min-h-screen bg-black overflow-hidden text-white py-20 px-6 md:px-12 lg:px-20 flex items-center"
     >
-      {/* Particles Background */}
+      {/* Background */}
       <ParticlesBackground />
 
-      {/* Contact Section Content */}
-      <div className="relative z-10 w-full flex flex-col md:flex-row items-center gap-10">
-        {/* Left Animated Image Section */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto">
+        {/* Heading and Introduction */}
         <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full md:w-1/2 flex justify-center"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="text-center mb-12 md:mb-14"
         >
-          <motion.img
-            src={Astra}
-            alt="Contact"
-            className="w-72 md:w-140 rounded-2xl shadow-lg object-cover"
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
+          <p className="text-blue-400 text-sm font-semibold tracking-[0.3em] uppercase mb-4">
+            Open to Collaboration
+          </p>
+
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
+            Let's Build Something
+            <span className="block text-blue-500 mt-2">Great Together</span>
+          </h2>
+
+          <p className="text-gray-400 text-sm sm:text-base max-w-2xl mx-auto mt-5 leading-relaxed">
+            Have an interesting idea, a project, or an opportunity to
+            collaborate? Let's connect, exchange ideas, and turn creative
+            thoughts into meaningful projects.
+          </p>
         </motion.div>
 
-        {/* Right Side Contact Form */}
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full md:w-1/2 bg-white/5 p-8 rounded-2xl shadow-lg border border-white/10"
-        >
-          <h2 className="text-3xl font-bold mb-6">Let’s Work Together</h2>
+        {/* Main Content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 items-center">
+          {/* Astra Image */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="w-full flex justify-center items-center"
+          >
+            <motion.img
+              src={Astra}
+              alt="Collaboration illustration"
+              className="w-72 sm:w-96 md:w-full max-w-lg rounded-2xl object-cover shadow-2xl"
+              animate={{ y: [0, -12, 0] }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          </motion.div>
 
-          <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-            {/* Name field */}
-            <div className="flex flex-col">
-              <label className="mb-1">
-                Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="name"
-                placeholder="Your Name"
-                value={formData.name}
-                onChange={handleChange}
-                className={`p-3 rounded-md bg-white/10 border ${
-                  errors.name ? "border-red-500" : "border-gray-500"
-                } text-white focus:outline-none focus:border-blue-500`}
-              />
-              {errors.name && (
-                <p className="text-red-500 text-xs">{errors.name}</p>
-              )}
-            </div>
+          {/* Contact Form */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="w-full bg-white/[0.04] backdrop-blur-md p-6 sm:p-8 rounded-2xl border border-white/10 shadow-2xl"
+          >
+            <h3 className="text-2xl font-bold mb-2">Start a Conversation</h3>
 
-            {/* Email field */}
-            <div className="flex flex-col">
-              <label className="mb-1">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                placeholder="Your Email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`p-3 rounded-md bg-white/10 border ${
-                  errors.email ? "border-red-500" : "border-gray-500"
-                } text-white focus:outline-none focus:border-blue-500`}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs">{errors.email}</p>
-              )}
-            </div>
+            <p className="text-gray-400 text-sm mb-7">
+              I'd love to hear from you. Share your thoughts below.
+            </p>
 
-            {/* Service dropdown */}
-            <div className="flex flex-col">
-              <label className="mb-1">
-                Service Needed <span className="text-red-500">*</span>
-              </label>
-
-              <select
-                name="service"
-                value={formData.service}
-                onChange={handleChange}
-                className={`p-3 rounded-md bg-white/10 border ${
-                  errors.service ? "border-red-500" : "border-gray-500"
-                } focus:outline-none focus:border-blue-500`}
-              >
-                <option value="" disabled>
-                  Something in mind?
-                </option>
-                <option value="Web Development" className="text-black">
-                  Web Development
-                </option>
-                <option value="Mobile Application" className="text-black">
-                  Mobile Application
-                </option>
-                <option value="Others" className="text-black">
-                  Others
-                </option>
-              </select>
-
-              {errors.service && (
-                <p className="text-red-500 text-xs">{errors.service}</p>
-              )}
-            </div>
-
-            {/* Budget field */}
-            {formData.service && formData.service !== "other" && (
-              <div className="flex flex-col">
-                <label className="mb-1">
-                  Budget <span className="text-red-500">*</span>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              {/* Name */}
+              <div>
+                <label
+                  htmlFor="contact-name"
+                  className="block mb-2 text-sm font-medium"
+                >
+                  Your Name <span className="text-red-500">*</span>
                 </label>
 
                 <input
+                  id="contact-name"
                   type="text"
-                  name="budget"
-                  placeholder="Your Budget"
-                  value={formData.budget}
+                  name="name"
+                  placeholder="Enter your name"
+                  value={formData.name}
                   onChange={handleChange}
-                  className={`p-3 rounded-md bg-white/10 border ${
-                    errors.budget ? "border-red-500" : "border-gray-500"
-                  } text-white focus:outline-none focus:border-blue-500`}
+                  autoComplete="name"
+                  className={inputClass("name")}
                 />
 
-                {errors.budget && (
-                  <p className="text-red-500 text-xs">{errors.budget}</p>
+                {errors.name && (
+                  <p className="text-red-400 text-xs mt-2">{errors.name}</p>
                 )}
               </div>
-            )}
 
-            {/* Idea textarea */}
-            <div className="flex flex-col">
-              <label className="mb-1">
-                Idea <span className="text-red-500">*</span>
-              </label>
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="contact-email"
+                  className="block mb-2 text-sm font-medium"
+                >
+                  Email Address <span className="text-red-500">*</span>
+                </label>
 
-              <textarea
-                name="idea"
-                rows={5}
-                placeholder="Enter your idea"
-                value={formData.idea}
-                onChange={handleChange}
-                className={`p-3 rounded-md bg-white/10 border ${
-                  errors.idea ? "border-red-500" : "border-gray-500"
-                } text-white focus:outline-none focus:border-blue-500`}
-              />
+                <input
+                  id="contact-email"
+                  type="email"
+                  name="email"
+                  placeholder="your@email.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  autoComplete="email"
+                  className={inputClass("email")}
+                />
 
-              {errors.idea && (
-                <p className="text-red-500 text-xs">{errors.idea}</p>
+                {errors.email && (
+                  <p className="text-red-400 text-xs mt-2">{errors.email}</p>
+                )}
+              </div>
+
+              {/* Message */}
+              <div>
+                <label
+                  htmlFor="contact-idea"
+                  className="block mb-2 text-sm font-medium"
+                >
+                  Your Message / Idea <span className="text-red-500">*</span>
+                </label>
+
+                <textarea
+                  id="contact-idea"
+                  name="idea"
+                  rows={6}
+                  placeholder="Tell me about your idea, project, or collaboration..."
+                  value={formData.idea}
+                  onChange={handleChange}
+                  className={`${inputClass("idea")} resize-none`}
+                />
+
+                {errors.idea && (
+                  <p className="text-red-400 text-xs mt-2">{errors.idea}</p>
+                )}
+              </div>
+
+              {/* Submission Status */}
+              {status && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className={`text-sm p-3 rounded-xl ${
+                    status === "success"
+                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                      : status === "error"
+                        ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                        : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                  }`}
+                >
+                  {status === "sending" && "Sending your message..."}
+
+                  {status === "success" &&
+                    "Message sent successfully! Thanks for reaching out."}
+
+                  {status === "error" &&
+                    "Unable to send your message. Please check the browser console for details."}
+                </div>
               )}
-            </div>
 
-            {/* Status message */}
-            {status && (
-              <p
-                className={`text-sm ${
-                  status === "success"
-                    ? "text-green-400"
-                    : status === "error"
-                      ? "text-red-400"
-                      : "text-yellow-400"
-                }`}
+              {/* Submit Button */}
+              <motion.button
+                type="submit"
+                whileHover={{
+                  scale: status === "sending" ? 1 : 1.02,
+                }}
+                whileTap={{
+                  scale: status === "sending" ? 1 : 0.97,
+                }}
+                disabled={status === "sending"}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-semibold transition duration-300 shadow-lg shadow-blue-500/20"
               >
-                {status === "sending"
-                  ? "Sending..."
-                  : status === "success"
-                    ? "Message sent successfully ✅"
-                    : "Something went wrong ❌"}
-              </p>
-            )}
-
-            {/* Submit button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              disabled={status === "sending"}
-              type="submit"
-              className="
-                bg-blue-600 
-                hover:bg-blue-700 
-                disabled:opacity-60 
-                text-white 
-                py-3 
-                rounded-md 
-                font-semibold 
-                transition
-              "
-            >
-              {status === "sending" ? "Sending..." : "Send Message"}
-            </motion.button>
-          </form>
-        </motion.div>
+                {status === "sending" ? "Sending..." : "Let's Collaborate"}
+              </motion.button>
+            </form>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
